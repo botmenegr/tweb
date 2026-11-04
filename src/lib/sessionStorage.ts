@@ -14,6 +14,12 @@ type StorageValues = {
   account2: StoredAccountSessionData,
   account3: StoredAccountSessionData,
   account4: StoredAccountSessionData,
+  account5: StoredAccountSessionData,
+  account6: StoredAccountSessionData,
+  account7: StoredAccountSessionData,
+  account8: StoredAccountSessionData,
+  account9: StoredAccountSessionData,
+  account10: StoredAccountSessionData,
 
   // @deprecated the passcode key is handed over in window.sessionStorage now
   // (@lib/passcode/keyHandoff) — kept only so old, on-disk values can be purged
@@ -68,6 +74,12 @@ const sessionStorage = new LocalStorageController<StorageValues & DeprecatedStor
   'account2',
   'account3',
   'account4',
+  'account5',
+  'account6',
+  'account7',
+  'account8',
+  'account9',
+  'account10',
   'auth_key_fingerprint',
   'user_auth',
   'dc'

@@ -10,6 +10,7 @@ import {recordPromiseBound} from '@helpers/recordPromise';
 import {StoragesResults} from '@appManagers/utils/storages/loadStorages';
 import {LogTypes, logger} from '@lib/logger';
 import {AccountSessionData, ActiveAccountNumber} from '@lib/accounts/types';
+import {ACCOUNT_NUMBERS} from '@lib/accounts/constants';
 import StateStorage from '@lib/stateStorage';
 import AccountController from '@lib/accounts/accountController';
 import getAuthKeyFingerprint from '@lib/accounts/authKeyFingerprint';
@@ -521,7 +522,7 @@ async function applyBuildVersionToStorage() {
 async function loadStateForAllAccounts() {
   if(TEST_MULTI_MIGRATION) {
     // * clear all storages to test migration
-    await Promise.all([1, 2, 3, 4].map(async(i) => {
+    await Promise.all(ACCOUNT_NUMBERS.map(async(i) => {
       const storages = createStorages(i as ActiveAccountNumber);
       for(const key in storages) {
         await storages[key as keyof typeof storages].clear();

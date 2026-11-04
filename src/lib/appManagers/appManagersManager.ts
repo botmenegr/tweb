@@ -10,6 +10,7 @@ import MTProtoMessagePort from '@lib/mainWorker/mainMessagePort';
 import {AppStoragesManager} from '@appManagers/appStoragesManager';
 import createManagers from '@appManagers/createManagers';
 import {ActiveAccountNumber} from '@lib/accounts/types';
+import {ACCOUNT_NUMBERS} from '@lib/accounts/constants';
 import AppStateManager from '@appManagers/appStateManager';
 import rootScope from '@lib/rootScope';
 import AccountController from '@lib/accounts/accountController';
@@ -72,12 +73,9 @@ export class AppManagersManager {
       });
     }
 
-    this.stateManagersByAccount = {
-      1: new AppStateManager(1),
-      2: new AppStateManager(2),
-      3: new AppStateManager(3),
-      4: new AppStateManager(4)
-    };
+    this.stateManagersByAccount = Object.fromEntries(
+      ACCOUNT_NUMBERS.map((n) => [n, new AppStateManager(n as ActiveAccountNumber)])
+    ) as StateManagersByAccount;
 
     const managersByAccountAsArray = Object.values(this.stateManagersByAccount)
 
@@ -177,7 +175,7 @@ export class AppManagersManager {
   }
 
   private async createManagers() {
-    const promises = ([1, 2, 3, 4] as ActiveAccountNumber[]).map(async(accountNumber) => {
+    const promises = (ACCOUNT_NUMBERS as ActiveAccountNumber[]).map(async(accountNumber) => {
       const stateManager = this.stateManagersByAccount[accountNumber]
       const appStoragesManager = new AppStoragesManager(accountNumber, stateManager.resetStoragesPromise);
 
