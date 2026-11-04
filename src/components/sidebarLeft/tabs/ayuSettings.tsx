@@ -70,10 +70,10 @@ export default function AyuSettingsSections() {
 
   return (
     <>
-      <Section name={'Режим призрака'}>
+      <Section name={<span>Режим призрака</span>}>
         <For each={GHOST}>{renderRow}</For>
       </Section>
-      <Section name={'Сохранение'}>
+      <Section name={<span>Сохранение</span>}>
         <For each={SAVING}>{renderRow}</For>
       </Section>
     </>
