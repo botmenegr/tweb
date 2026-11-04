@@ -6818,7 +6818,6 @@ const lang = {
 
   // Settings → Experimental (@components/sidebarLeft/tabs/experimental), opened by the version under Settings
   'Experimental.Title': 'Experimental',
-  'Ayu.Title': 'AyuGram',
   'Experimental.Info': 'Tools for testing and debugging. They can make Telegram slower or less stable, so change them only if you know what they do.',
   'Experimental.OnNotice': 'Experimental settings are on',
   'Experimental.Logs': 'Debug Logs',

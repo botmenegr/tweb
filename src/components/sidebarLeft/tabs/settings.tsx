@@ -429,7 +429,7 @@ const Settings = () => {
       <Section>
         <Row clickable={() => tab.slider.createTab(hotReloadGuard.tabs.AppAyuTab).open()}>
           <Row.Icon icon="tools" />
-          <Row.Title>{i18n('Ayu.Title')}</Row.Title>
+          <Row.Title><span>AyuGram</span></Row.Title>
         </Row>
       </Section>
       <Show when={walletAvailable()}>

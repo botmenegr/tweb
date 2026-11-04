@@ -1,4 +1,5 @@
-import {For} from 'solid-js';
+import {For, onMount} from 'solid-js';
+import {useSuperTab} from '@components/solidJsTabs/superTabProvider';
 import CheckboxFieldTsx from '@components/checkboxFieldTsx';
 import Row from '@components/rowTsx';
 import Section from '@components/section';
@@ -54,7 +55,9 @@ const SAVING: AyuRow[] = [
 
 /** The AyuGram-style switches. They apply at once and are kept with the other app settings. */
 export default function AyuSettingsSections() {
+  const [tab] = useSuperTab();
   const [appSettings, setAppSettings] = useAppSettings();
+  onMount(() => tab.title.replaceChildren('AyuGram'));
   const isOn = (key: keyof AyuSettings) => appSettings.ayu?.[key] ?? AYU_DEFAULTS[key];
   const toggle = (key: keyof AyuSettings, value: boolean) => setAppSettings('ayu', {...appSettings.ayu, [key]: value});
 

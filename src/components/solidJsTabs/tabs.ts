@@ -412,7 +412,7 @@ export const AppExperimentalTab = Object.assign(
 // * ghost mode and saving of deleted / edited messages (@lib/ayu), opened from a row at the top of Settings
 export const AppAyuTab =
   scaffoldSolidJSTab({
-    title: 'Ayu.Title',
+    title: 'Experimental.Title', // replaced by the tab itself, which has a plain-text title
     getComponentModule: () => import('../sidebarLeft/tabs/ayuSettings')
   });
 
