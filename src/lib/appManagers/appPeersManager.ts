@@ -465,6 +465,10 @@ export class AppPeersManager extends AppManager {
   }
 
   public noForwards(peerId: PeerId) {
+    if(this.appStateManager.getAyu().allowCopy) {
+      return false;
+    }
+
     if(peerId.isUser()) {
       const userFull = this.appProfileManager.getCachedFullUser(peerId.toUserId());
       return !!(userFull?.pFlags?.noforwards_my_enabled || userFull?.pFlags?.noforwards_peer_enabled);

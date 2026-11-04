@@ -53,6 +53,14 @@ const SAVING: AyuRow[] = [
   }
 ];
 
+const PROTECTED: AyuRow[] = [
+  {
+    key: 'allowCopy',
+    title: 'Копировать из защищённых чатов',
+    subtitle: 'Текст выделяется и копируется, медиа сохраняется. Пересылка сервером по-прежнему запрещена. Полностью — после перезагрузки страницы'
+  }
+];
+
 /** The AyuGram-style switches. They apply at once and are kept with the other app settings. */
 export default function AyuSettingsSections() {
   const [tab] = useSuperTab();
@@ -78,6 +86,18 @@ export default function AyuSettingsSections() {
       </Section>
       <Section name={<span>Сохранение</span>}>
         <For each={SAVING}>{renderRow}</For>
+      </Section>
+      <Section name={<span>Защищённый контент</span>}>
+        <For each={PROTECTED}>{renderRow}</For>
+      </Section>
+      <Section name={<span>Профиль</span>}>
+        <Row>
+          <Row.CheckboxFieldToggle>
+            <CheckboxFieldTsx toggle checked={appSettings.showPeerIds} onChange={(checked) => setAppSettings('showPeerIds', checked)} />
+          </Row.CheckboxFieldToggle>
+          <Row.Title>Показывать ID</Row.Title>
+          <Row.Subtitle>В профиле пользователя, чата или канала, нажатие копирует ID</Row.Subtitle>
+        </Row>
       </Section>
     </>
   );

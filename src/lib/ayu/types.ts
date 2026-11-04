@@ -18,7 +18,9 @@ export type AyuSettings = {
   /** A message deleted by someone else stays in the chat with a mark */
   saveDeleted: boolean,
   /** The previous texts of an edited message are kept */
-  saveEdits: boolean
+  saveEdits: boolean,
+  /** Text of chats and channels with protected content can be selected, copied and saved (applied at once for new data, fully after a reload) */
+  allowCopy: boolean
 };
 
 export const AYU_DEFAULTS: AyuSettings = {
@@ -28,7 +30,8 @@ export const AYU_DEFAULTS: AyuSettings = {
   ghostStories: false,
   hideSponsored: false,
   saveDeleted: true,
-  saveEdits: true
+  saveEdits: true,
+  allowCopy: false
 };
 
 export type AyuEditVersion = {

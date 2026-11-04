@@ -162,6 +162,11 @@ export class AppChatsManager extends AppManager {
       return;
     }
 
+    // "copy from protected chats": the client no longer learns about the restriction (the server still refuses to forward)
+    if(this.appStateManager.getAyu().allowCopy && (chat as Chat.channel).pFlags?.noforwards) {
+      delete (chat as Chat.channel).pFlags.noforwards;
+    }
+
     if(chat._ === 'community' || chat._ === 'communityForbidden') {
       const id = chat.id = chat.id.toChatId();
       const oldCommunity = this.chats[id];

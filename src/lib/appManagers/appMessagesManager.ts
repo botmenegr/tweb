@@ -7835,6 +7835,9 @@ export class AppMessagesManager extends AppManager {
     }
 
     message.pFlags ??= {};
+    if(message._ === 'message' && message.pFlags.noforwards && this.appStateManager.getAyu().allowCopy) {
+      delete message.pFlags.noforwards;
+    }
 
     // * exclude from state
     // defineNotNumerableProperties(message, ['rReply', 'mid', 'savedFrom', 'fwdFromId', 'fromId', 'peerId', 'reply_to_mid', 'viaBotId']);
