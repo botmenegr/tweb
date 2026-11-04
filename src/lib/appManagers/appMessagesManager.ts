@@ -11713,10 +11713,9 @@ export class AppMessagesManager extends AppManager {
       //   newMessage.uploadingFileName = [...oldMessage.uploadingFileName];
       // }
 
+      this.keepEditHistory(oldMessage, newMessage, message);
       return newMessage;
     }, false, true);
-
-    this.keepEditHistory(oldMessage, newMessage, message);
 
     const pendingEdit = this.pendingEditingMessages.get(mid);
     if(pendingEdit && !pendingEdit.canceled) {
@@ -12500,13 +12499,11 @@ export class AppMessagesManager extends AppManager {
       }
 
       if(!message.ayuDeleted) {
-        message.ayuDeleted = true;
-        this.rootScope.dispatchEvent('message_edit', {
-          storageKey: storage.key,
-          peerId,
-          mid: mids[idx],
-          message
-        });
+        // through modifyMessage, so the copy the main thread keeps gets the mark as well
+        this.modifyMessage(message, () => {
+          message.ayuDeleted = true;
+        }, storage, true);
+        this.dispatchMessageEditEvent(message, storage.key);
       }
     });
 
