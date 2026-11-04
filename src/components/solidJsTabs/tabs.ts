@@ -409,6 +409,14 @@ export const AppExperimentalTab = Object.assign(
 (AppExperimentalTab as any).noSame = true;
 
 
+// * ghost mode and saving of deleted / edited messages (@lib/ayu), opened from a row at the top of Settings
+export const AppAyuTab =
+  scaffoldSolidJSTab({
+    title: 'Ayu.Title',
+    getComponentModule: () => import('../sidebarLeft/tabs/ayuSettings')
+  });
+
+
 export const AppQuickReactionTab =
   scaffoldSolidJSTab({
     title: 'DoubleTapSetting',

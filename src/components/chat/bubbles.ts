@@ -4,6 +4,7 @@ import makeMediaPreviewsAccessible from '@helpers/dom/mediaPreviewAccessibility'
 import type {AppImManager, ChatSavedPosition, ChatSetInnerPeerOptions, ChatSetPeerOptions} from '@lib/appImManager';
 import type {HistoryResult, MyEphemeralMessage, MyMessage} from '@appManagers/appMessagesManager';
 import type {MyDocument} from '@appManagers/appDocsManager';
+import type {AyuMessageFields} from '@lib/ayu/types';
 import type Chat from '@components/chat/chat';
 import type {BubbleElementAddons} from '@components/chat/types';
 import IS_TOUCH_SUPPORTED from '@environment/touchSupport';
@@ -1526,7 +1527,14 @@ export default class ChatBubbles {
       if(message._ === 'message' && this.updateSolidMessageBody(bubble, message)) {
         updatedLocally = true;
       }
-      if(updatedLocally) return;
+      if(updatedLocally) {
+        // the time carries the AyuGram marks (deleted, edits), which the body's own update may not redraw
+        const ayu = message as Message.message & AyuMessageFields;
+        if(message._ === 'message' && (ayu.ayuDeleted || ayu.ayuEdits?.length)) {
+          this.updateSolidMessageBodyTime(bubble, message);
+        }
+        return;
+      }
 
       // do not edit geo messages
       if(bubble.querySelector('.geo-container')) {
