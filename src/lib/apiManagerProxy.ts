@@ -18,6 +18,7 @@ import telegramMeWebManager from '@lib/telegramMeWebManager';
 import pause from '@helpers/schedulers/pause';
 import ENVIRONMENT from '@environment/index';
 import loadStateForAllAccountsOnce from '@appManagers/utils/state/loadState';
+import {MAX_ACCOUNTS} from '@lib/accounts/constants';
 import opusDecodeController from '@lib/opusDecodeController';
 import MTProtoMessagePort, {ThreadedWorkerEvents} from '@lib/mainWorker/mainMessagePort';
 import cryptoMessagePort from '@lib/crypto/cryptoMessagePort';
@@ -1218,7 +1219,7 @@ class ApiManagerProxy extends MTProtoMessagePort {
 
   public sendAllStates(loadedStates: Awaited<ReturnType<ApiManagerProxy['loadAllStates']>>) {
     const promises: Promise<any>[] = [];
-    for(let i = 1; i <= 4; i++) {
+    for(let i = 1; i <= MAX_ACCOUNTS; i++) {
       const state = loadedStates[i as ActiveAccountNumber];
       const promise = this.invoke('state', {
         ...state,

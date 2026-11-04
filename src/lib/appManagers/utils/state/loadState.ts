@@ -539,11 +539,9 @@ async function loadStateForAllAccounts() {
 
   let stateForFirstAccount: LoadStateResult;
 
-  const restPromise = Promise.all([
-    loadStateForAccount(2),
-    loadStateForAccount(3),
-    loadStateForAccount(4)
-  ]);
+  const restPromise = Promise.all(
+    ACCOUNT_NUMBERS.slice(1).map((accountNumber) => loadStateForAccount(accountNumber as ActiveAccountNumber))
+  );
 
   if(!hasMultiAccount) {
     stateForFirstAccount = await loadOldState();
@@ -568,12 +566,11 @@ async function loadStateForAllAccounts() {
     console.log('loadStateForAllAccounts time', performance.now() - perf);
   }
 
-  return {
-    1: stateForFirstAccount,
-    2: rest[0],
-    3: rest[1],
-    4: rest[2]
-  };
+  const result = {1: stateForFirstAccount} as Record<ActiveAccountNumber, LoadStateResult>;
+  rest.forEach((state, idx) => {
+    result[(idx + 2) as ActiveAccountNumber] = state;
+  });
+  return result;
 }
 
 let promise: ReturnType<typeof loadStateForAllAccounts>;

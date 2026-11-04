@@ -11,12 +11,12 @@ import StaticUtilityClass from '@lib/staticUtilityClass';
 
 import {AccountSessionData, ActiveAccountNumber, SessionUserFields, StoredAccountSessionData} from '@lib/accounts/types';
 import getAuthKeyFingerprint from '@lib/accounts/authKeyFingerprint';
-import {MAX_ACCOUNTS} from '@lib/accounts/constants';
+import {MAX_ACCOUNTS, ACCOUNT_NUMBERS as ALL_ACCOUNT_NUMBERS} from '@lib/accounts/constants';
 import bytesToHex from '@helpers/bytes/bytesToHex';
 import randomize from '@helpers/array/randomize';
 import noop from '@helpers/noop';
 
-const ACCOUNT_NUMBERS: ActiveAccountNumber[] = [1, 2, 3, 4];
+const ACCOUNT_NUMBERS = ALL_ACCOUNT_NUMBERS as ActiveAccountNumber[];
 const SESSION_USER_FIELDS: (keyof SessionUserFields)[] = ['firstName', 'lastName', 'phone', 'color', 'isPremium', 'emojiStatusId'];
 
 type AccountDataChanges = Partial<AccountSessionData> | ((data: AccountSessionData) => Partial<AccountSessionData> | undefined);
