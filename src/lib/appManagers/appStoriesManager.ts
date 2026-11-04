@@ -1970,7 +1970,7 @@ export default class AppStoriesManager extends AppManager {
       max_id: maxId
     });
 
-    if(TEST_READ) {
+    if(TEST_READ || this.appStateManager.getAyu().ghostStories) {
       return;
     }
 
@@ -1984,6 +1984,10 @@ export default class AppStoriesManager extends AppManager {
   }
 
   public incrementStoryViews(peerId: PeerId, ids: StoryItem['id'][]) {
+    if(this.appStateManager.getAyu().ghostStories) {
+      return Promise.resolve(false);
+    }
+
     return this.apiManager.invokeApiSingleProcess({
       method: 'stories.incrementStoryViews',
       params: {

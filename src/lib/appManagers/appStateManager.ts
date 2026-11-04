@@ -9,6 +9,7 @@ import {StoragesResults} from '@appManagers/utils/storages/loadStorages';
 import commonStateStorage from '@lib/commonStateStorage';
 import callbackify from '@helpers/callbackify';
 import isObject from '@helpers/object/isObject';
+import {AYU_DEFAULTS, AyuSettings} from '@lib/ayu/types';
 
 export type ResetStoragesPromise = CancellablePromise<{
   storages: Map<keyof StoragesResults, (PeerId | UserId | ChatId)[]>,
@@ -36,6 +37,11 @@ export default class AppStateManager {
 
   public getState() {
     return Promise.resolve(this.state);
+  }
+
+  /** The ghost-mode and saving switches, read at the moment they are needed: a change applies at once */
+  public getAyu(): AyuSettings {
+    return {...AYU_DEFAULTS, ...this.state.settings?.ayu};
   }
 
   public setByKey(key: string, value: any) {

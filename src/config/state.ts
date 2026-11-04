@@ -3,6 +3,7 @@ import type {AppMediaPlaybackController} from '@components/appMediaPlaybackContr
 import type {TopPeerType, MyTopPeer} from '@appManagers/appUsersManager';
 import type {AccountContentSettings, AccountThemes, AutoDownloadSettings, BaseTheme, BotCommand, Dialog, NotifyPeer, PeerNotifySettings, Theme, ThemeSettings, WallPaper} from '@layer';
 import type DialogsStorage from '@lib/storages/dialogs';
+import type {AyuSettings} from '@lib/ayu/types';
 import type FiltersStorage from '@lib/storages/filters';
 import type {AuthState, Modify} from '@types';
 import type {ShortcutKey as PasscodeLockShortcutKey} from '@components/sidebarLeft/tabs/passcodeLock/shortcutBuilder';
@@ -129,6 +130,8 @@ export type StateSettings = {
   notifyAllAccounts: boolean,
   tabsInSidebar: boolean,
   showPeerIds: boolean,
+  /** Ghost mode and saving of deleted / edited messages, see `@lib/ayu/types`. Missing keys take the defaults. */
+  ayu?: Partial<AyuSettings>,
   /** Ids of the settings-search results picked last, most recent first. */
   settingsSearchRecent: string[],
   seenTooltips: {

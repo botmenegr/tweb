@@ -27,6 +27,7 @@ import {clearLogs, createLogsFile, downloadLogsFile, setLogsCollected} from '@li
 import {isMemoryWatchOn, startMemoryWatch, stopMemoryWatch} from '@lib/debug/memoryWatch';
 import I18n, {i18n, LangPackKey} from '@lib/langPack';
 import {useAppSettings} from '@stores/appSettings';
+import AyuSettingsSections from '@components/sidebarLeft/tabs/ayuSettings';
 
 type AppExperimentalTabType = typeof AppExperimentalTab;
 
@@ -393,6 +394,8 @@ const ExperimentalTab = () => {
         />
         <RestartToggle flag="a11y" title="Experimental.A11y" subtitle="Experimental.A11y.Subtitle" />
       </Section>
+
+      <AyuSettingsSections />
 
       <Section name="Experimental.Connection">
         <RestartToggle flag="noPfs" title="Experimental.Pfs" subtitle="Experimental.Pfs.Subtitle" inverted />

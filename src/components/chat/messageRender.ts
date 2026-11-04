@@ -32,6 +32,7 @@ import {makeTime} from '@components/chat/utils';
 import {useAppConfig} from '@stores/appState';
 import {formatNanoton} from '@helpers/paymentsWrapCurrencyAmount';
 import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
+import type {AyuMessageFields} from '@lib/ayu/types';
 
 const NBSP = '&nbsp;';
 
@@ -59,6 +60,14 @@ const makeEdited = () => {
   edited.classList.add('time-edited', 'time-part');
   _i18n(edited, 'EditedMessage');
   return edited;
+};
+
+// * the marks of "save deleted messages" and "save edits" (see @lib/ayu/types): worded like the "edited" label
+const makeAyuMark = (text: string) => {
+  const mark = document.createElement('i');
+  mark.classList.add('time-edited', 'time-part');
+  mark.textContent = text;
+  return mark;
 };
 
 // layer 229: an ordinary message an ephemeral one is standing in for says "updated" where an
@@ -276,6 +285,14 @@ export namespace MessageRender {
       title += (message.edit_date && !message.pFlags.edit_hide ? `\nEdited: ${getFullDate(new Date(message.edit_date * 1000))}` : '') +
         (fwdFrom ? `\nOriginal: ${getFullDate(new Date(fwdFrom.saved_date || fwdFrom.date * 1000))}` : '');
 
+      const ayuMessage = message as Message.message & AyuMessageFields;
+      if(ayuMessage.ayuEdits?.length) {
+        title += '\n\nРанее:' + ayuMessage.ayuEdits.map((version) => {
+          const text = version.message.length > 300 ? version.message.slice(0, 300) + '…' : version.message;
+          return `\n— ${getFullDate(new Date(version.date * 1000))}: ${text}`;
+        }).join('');
+      }
+
       const messageMedia = message.media;
       if(messageMedia?._ === 'messageMediaDice' && messageMedia.game_outcome) {
         const span = document.createElement('span');
@@ -326,6 +343,14 @@ export namespace MessageRender {
         args.unshift(editedSpan = makeUpdated());
       } else if(!editedPrimary && message.edit_date && chatType !== ChatType.Scheduled && !message.pFlags.edit_hide) {
         args.unshift(editedSpan = makeEdited());
+      }
+
+      if(ayuMessage.ayuEdits?.length) {
+        args.unshift(makeAyuMark(`правок: ${ayuMessage.ayuEdits.length}`));
+      }
+
+      if(ayuMessage.ayuDeleted) {
+        args.unshift(makeAyuMark('удалено'));
       }
 
       if(chatType !== ChatType.Pinned && message.pFlags.pinned) {

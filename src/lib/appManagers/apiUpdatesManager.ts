@@ -21,6 +21,7 @@ import debounce from '@helpers/schedulers/debounce';
 import copy from '@helpers/object/copy';
 import noop from '@helpers/noop';
 import pause from '@helpers/schedulers/pause';
+import type {AyuLocalUpdate} from '@lib/ayu/types';
 
 type UpdatesState = {
   pendingPtsUpdates: (Update & {pts: number, pts_count: number})[],
@@ -620,6 +621,12 @@ class ApiUpdatesManager {
     seq: number,
     seqStart: number
   }> & Parameters<ApiUpdatesManager['processUpdateMessage']>[1] = {}) {
+    // * a deletion this client made up (the user's own, a cancelled send, a cleared history) is not one that
+    // * "save deleted messages" keeps: AppMessagesManager.onServerUpdateDeleteMessages looks at the mark
+    if(options.local && (update._ === 'updateDeleteMessages' || update._ === 'updateDeleteChannelMessages')) {
+      (update as AyuLocalUpdate).ayuLocal = true;
+    }
+
     let channelId: ChatId;
     switch(update._) {
       case 'updateNewChannelMessage':

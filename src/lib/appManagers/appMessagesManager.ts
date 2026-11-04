@@ -118,6 +118,7 @@ import {AttachedMedia, CreatePollPayload} from '@components/popups/createPoll/st
 import StreamedMessageDrafts, {StreamedMessageDraft, StreamedMessageDraftContent, StreamedMessageDraftRemovalReason, StreamedMessageDraftScope, StreamedMessageStopScope, getStreamedMessageContentMatchText} from '@appManagers/utils/messages/streamedMessageDrafts';
 import GramTransferDrafts, {GramTransferDraftContent, WALLET_FIRST_GRAMS_SUGGESTION} from '@lib/wallet/transferMessages';
 import getFolderPinLimitType from '@appManagers/utils/dialogs/getFolderPinLimitType';
+import type {AyuLocalUpdate, AyuMessageFields} from '@lib/ayu/types';
 
 // console.trace('include');
 // TODO: если удалить диалог находясь в папке, то он не удалится из папки и будет виден в настройках
@@ -905,8 +906,8 @@ export class AppMessagesManager extends AppManager {
 
       updateChannelAvailableMessages: this.onUpdateChannelAvailableMessages,
 
-      updateDeleteMessages: this.onUpdateDeleteMessages,
-      updateDeleteChannelMessages: this.onUpdateDeleteMessages,
+      updateDeleteMessages: this.onServerUpdateDeleteMessages,
+      updateDeleteChannelMessages: this.onServerUpdateDeleteMessages,
 
       updateNewEphemeralMessage: this.onUpdateNewEphemeralMessage,
       updateEditEphemeralMessage: this.onUpdateEditEphemeralMessage,
@@ -10063,7 +10064,7 @@ export class AppMessagesManager extends AppManager {
     // user can scroll into messages whose mid <= a previously-read maxId
     // (e.g. messages loaded later, or scrolling up after a fast jump to bottom).
     // Without this, the unread counter "freezes" mid-scroll on high-volume chats.
-    const skipServerCall = historyStorage.triedToReadMaxId >= maxId || !!historyStorage.readPromise;
+    const skipServerCall = this.appStateManager.getAyu().ghostRead || historyStorage.triedToReadMaxId >= maxId || !!historyStorage.readPromise;
 
     let apiPromise: Promise<any>;
     if(monoforumThreadId) {
@@ -10484,10 +10485,12 @@ export class AppMessagesManager extends AppManager {
         messages: msgIds
       };
 
-      promise = this.apiManager.invokeApi('channels.readMessageContents', {
-        channel: this.appChatsManager.getChannelInput(channelId),
-        id: msgIds
-      });
+      promise = this.appStateManager.getAyu().ghostRead ?
+        Promise.resolve(true) :
+        this.apiManager.invokeApi('channels.readMessageContents', {
+          channel: this.appChatsManager.getChannelInput(channelId),
+          id: msgIds
+        });
     } else {
       update = {
         _: 'updateReadMessagesContents',
@@ -10496,9 +10499,12 @@ export class AppMessagesManager extends AppManager {
         pts_count: undefined
       };
 
-      promise = this.apiManager.invokeApi('messages.readMessageContents', {
-        id: msgIds
-      }).then((affectedMessages) => {
+      promise = (this.appStateManager.getAyu().ghostRead ?
+        Promise.resolve({pts: undefined as number, pts_count: undefined as number}) :
+        this.apiManager.invokeApi('messages.readMessageContents', {
+          id: msgIds
+        })
+      ).then((affectedMessages) => {
         (update as Update.updateReadMessagesContents).pts = affectedMessages.pts;
         (update as Update.updateReadMessagesContents).pts_count = affectedMessages.pts_count;
         this.apiUpdatesManager.processLocalUpdate(update);
@@ -11642,6 +11648,41 @@ export class AppMessagesManager extends AppManager {
     });
   }
 
+  /**
+   * "Save edits": the text a message had before this edit goes into `ayuEdits`, oldest first, and the marks the old
+   * object carried (`ayuDeleted`) move on to the new one, which the server's copy replaced it with.
+   */
+  private keepEditHistory(oldMessage: Message, newMessage: Message, eventMessage?: Message) {
+    if(oldMessage?._ !== 'message' || newMessage?._ !== 'message') {
+      return;
+    }
+
+    const before = oldMessage as Message.message & AyuMessageFields;
+    const after = newMessage as Message.message & AyuMessageFields;
+    if(before.ayuDeleted) {
+      after.ayuDeleted = true;
+    }
+
+    const edits = before.ayuEdits || [];
+    const changed = this.appStateManager.getAyu().saveEdits &&
+      (before.message !== after.message || !deepEqual(before.entities, after.entities));
+    const next = changed ? [...edits, {
+      date: before.edit_date || before.date,
+      message: before.message,
+      entities: before.entities
+    }] : edits;
+    if(next.length) {
+      after.ayuEdits = next;
+    }
+
+    // the 'message_edit' event carries the update's own object, which may not be the stored one
+    if(eventMessage && eventMessage !== newMessage && eventMessage._ === 'message') {
+      const event = eventMessage as Message.message & AyuMessageFields;
+      event.ayuDeleted = after.ayuDeleted;
+      event.ayuEdits = after.ayuEdits;
+    }
+  }
+
   private onUpdateEditMessage = (update: Update.updateEditMessage | Update.updateEditChannelMessage) => {
     const message = update.message as MyMessage;
     const peerId = this.getMessagePeer(message);
@@ -11674,6 +11715,8 @@ export class AppMessagesManager extends AppManager {
 
       return newMessage;
     }, false, true);
+
+    this.keepEditHistory(oldMessage, newMessage, message);
 
     const pendingEdit = this.pendingEditingMessages.get(mid);
     if(pendingEdit && !pendingEdit.canceled) {
@@ -12429,6 +12472,48 @@ export class AppMessagesManager extends AppManager {
     }
     if(fullChatChanged) this.rootScope.dispatchEvent('chat_full_update', channelId);
   }
+
+  /**
+   * "Save deleted messages": a deletion that came from the server (someone deleted a message, a difference said so)
+   * leaves the messages it names in the chat, marked as deleted, instead of taking them away. What this client does
+   * not hold, and every deletion it made itself (marked `ayuLocal`), goes as ever.
+   */
+  private onServerUpdateDeleteMessages = (update: Update.updateDeleteMessages | Update.updateDeleteChannelMessages) => {
+    if(!this.appStateManager.getAyu().saveDeleted || (update as AyuLocalUpdate).ayuLocal) {
+      return this.onUpdateDeleteMessages(update);
+    }
+
+    const channelId = (update as Update.updateDeleteChannelMessages).channel_id;
+    const mids = update.messages.map((id) => this.appMessagesIdsManager.generateMessageId(id, channelId));
+    const peerId: PeerId = channelId ? channelId.toPeerId(true) : this.findPeerIdByMids(mids);
+    if(!peerId) {
+      return this.onUpdateDeleteMessages(update);
+    }
+
+    const storage = this.getHistoryMessagesStorage(peerId);
+    const rest: number[] = [];
+    update.messages.forEach((id, idx) => {
+      const message = this.getMessageByPeer(peerId, mids[idx]) as Message.message & AyuMessageFields;
+      if(message?._ !== 'message' || this.isEphemeralMessage(message)) {
+        rest.push(id);
+        return;
+      }
+
+      if(!message.ayuDeleted) {
+        message.ayuDeleted = true;
+        this.rootScope.dispatchEvent('message_edit', {
+          storageKey: storage.key,
+          peerId,
+          mid: mids[idx],
+          message
+        });
+      }
+    });
+
+    if(rest.length) {
+      return this.onUpdateDeleteMessages({...update, messages: rest});
+    }
+  };
 
   private onUpdateDeleteMessages = (
     update: Update.updateDeleteMessages | Update.updateDeleteChannelMessages,
@@ -14987,6 +15072,10 @@ export class AppMessagesManager extends AppManager {
     force?: boolean,
     threadId?: number
   ): Promise<boolean> {
+    if(this.appStateManager.getAyu().ghostTyping) {
+      return false;
+    }
+
     threadId = this.getTypingThreadId(peerId, threadId);
 
     const key = this.getTypingKey(peerId, threadId);
@@ -15722,7 +15811,7 @@ export class AppMessagesManager extends AppManager {
 
     // * don't show sponsored messages in own channels, nor to a Premium account that hid them
     // * (Android's `isSponsoredDisabled`: the own full user, while it is known)
-    if(this.isSponsoredHidden() || (!peerId.isUser() && await this.canSendToPeer(peerId))) {
+    if(this.appStateManager.getAyu().hideSponsored || this.isSponsoredHidden() || (!peerId.isUser() && await this.canSendToPeer(peerId))) {
       return Promise.resolve({
         _: 'messages.sponsoredMessagesEmpty'
       });
